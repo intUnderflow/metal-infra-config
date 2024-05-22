@@ -13,10 +13,17 @@ func main() {
 }
 
 func opts() fx.Option {
-	return fx.Provide(
-		entities.NewConfig,
-		handler.NewHandler,
-		grpc.NewServer,
-		proto.RegisterMetalInfraConfigServer,
+	return fx.Options(
+		fx.Provide(
+			entities.NewConfig,
+			handler.NewHandler,
+			grpc.NewServer,
+			func(g *grpc.Server) grpc.ServiceRegistrar {
+				return g
+			},
+		),
+		fx.Invoke(
+			proto.RegisterMetalInfraConfigServer,
+		),
 	)
 }
