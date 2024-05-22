@@ -3,7 +3,7 @@
 Goals:
 - Shared configuration across peers
 - Authentication
--Hosted on each peer, totally resilient to downtime
+- Hosted on each peer, totally resilient to downtime
 
 Used to:
 - Support bootstrapping a valid Wireguard mesh network configuration
