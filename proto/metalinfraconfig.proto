@@ -7,6 +7,10 @@ service MetalInfraConfig {
   rpc Set(SetRequest) returns (SetResponse);
 }
 
+service InternalSync {
+  rpc Sync(stream SyncRecord) returns (stream SyncRecord);
+}
+
 message SetRequest {
   string key = 1;
   string value = 2;
@@ -14,3 +18,9 @@ message SetRequest {
 }
 
 message SetResponse {}
+
+message SyncRecord {
+  string key = 1;
+  string value = 2;
+  uint64 version = 3;
+}

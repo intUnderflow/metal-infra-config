@@ -107,3 +107,125 @@ var MetalInfraConfig_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "metalinfraconfig.proto",
 }
+
+const (
+	InternalSync_Sync_FullMethodName = "/proto.InternalSync/Sync"
+)
+
+// InternalSyncClient is the client API for InternalSync service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type InternalSyncClient interface {
+	Sync(ctx context.Context, opts ...grpc.CallOption) (InternalSync_SyncClient, error)
+}
+
+type internalSyncClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewInternalSyncClient(cc grpc.ClientConnInterface) InternalSyncClient {
+	return &internalSyncClient{cc}
+}
+
+func (c *internalSyncClient) Sync(ctx context.Context, opts ...grpc.CallOption) (InternalSync_SyncClient, error) {
+	stream, err := c.cc.NewStream(ctx, &InternalSync_ServiceDesc.Streams[0], InternalSync_Sync_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &internalSyncSyncClient{stream}
+	return x, nil
+}
+
+type InternalSync_SyncClient interface {
+	Send(*SyncRecord) error
+	Recv() (*SyncRecord, error)
+	grpc.ClientStream
+}
+
+type internalSyncSyncClient struct {
+	grpc.ClientStream
+}
+
+func (x *internalSyncSyncClient) Send(m *SyncRecord) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *internalSyncSyncClient) Recv() (*SyncRecord, error) {
+	m := new(SyncRecord)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// InternalSyncServer is the server API for InternalSync service.
+// All implementations must embed UnimplementedInternalSyncServer
+// for forward compatibility
+type InternalSyncServer interface {
+	Sync(InternalSync_SyncServer) error
+	mustEmbedUnimplementedInternalSyncServer()
+}
+
+// UnimplementedInternalSyncServer must be embedded to have forward compatible implementations.
+type UnimplementedInternalSyncServer struct {
+}
+
+func (UnimplementedInternalSyncServer) Sync(InternalSync_SyncServer) error {
+	return status.Errorf(codes.Unimplemented, "method Sync not implemented")
+}
+func (UnimplementedInternalSyncServer) mustEmbedUnimplementedInternalSyncServer() {}
+
+// UnsafeInternalSyncServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to InternalSyncServer will
+// result in compilation errors.
+type UnsafeInternalSyncServer interface {
+	mustEmbedUnimplementedInternalSyncServer()
+}
+
+func RegisterInternalSyncServer(s grpc.ServiceRegistrar, srv InternalSyncServer) {
+	s.RegisterService(&InternalSync_ServiceDesc, srv)
+}
+
+func _InternalSync_Sync_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(InternalSyncServer).Sync(&internalSyncSyncServer{stream})
+}
+
+type InternalSync_SyncServer interface {
+	Send(*SyncRecord) error
+	Recv() (*SyncRecord, error)
+	grpc.ServerStream
+}
+
+type internalSyncSyncServer struct {
+	grpc.ServerStream
+}
+
+func (x *internalSyncSyncServer) Send(m *SyncRecord) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *internalSyncSyncServer) Recv() (*SyncRecord, error) {
+	m := new(SyncRecord)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// InternalSync_ServiceDesc is the grpc.ServiceDesc for InternalSync service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var InternalSync_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.InternalSync",
+	HandlerType: (*InternalSyncServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Sync",
+			Handler:       _InternalSync_Sync_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "metalinfraconfig.proto",
+}
