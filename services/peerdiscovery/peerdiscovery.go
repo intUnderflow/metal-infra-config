@@ -18,28 +18,6 @@ var (
 	_peerLastSeenRegex = regexp.MustCompile("(.+)\\._internal\\.peer_last_seen")
 )
 
-type Peer struct {
-	id       entities.PeerID
-	address  string
-	lastSeen time.Time
-}
-
-func (p Peer) ID() entities.PeerID {
-	return p.id
-}
-
-func (p Peer) Address() string {
-	return p.address
-}
-
-func (p Peer) LastSeen() time.Time {
-	return p.lastSeen
-}
-
-func (p Peer) isValid() bool {
-	return p.id != "" && p.address != "" && p.lastSeen.Unix() > 0
-}
-
 type PeerDiscovery struct {
 	config *entities.Config
 }
@@ -48,15 +26,15 @@ func NewPeerDiscovery(config *entities.Config) *PeerDiscovery {
 	return &PeerDiscovery{config: config}
 }
 
-func (p *PeerDiscovery) GetPeers() ([]Peer, error) {
-	peers := map[entities.PeerID]*Peer{}
+func (p *PeerDiscovery) GetPeers() ([]entities.Peer, error) {
+	peers := map[entities.PeerID]*peerUnderConstruction{}
 	var errorsFound []error
 	for key, value := range p.config.List() {
 		peerID := derivePeerID(key)
 		if peerID != "" {
 			_, ok := peers[peerID]
 			if !ok {
-				peers[peerID] = &Peer{
+				peers[peerID] = &peerUnderConstruction{
 					id: peerID,
 				}
 			}
@@ -73,13 +51,31 @@ func (p *PeerDiscovery) GetPeers() ([]Peer, error) {
 		}
 	}
 
-	var validPeers []Peer
+	var validPeers []entities.Peer
 	for _, peer := range peers {
-		if peer.isValid() {
-			validPeers = append(validPeers, *peer)
+		peerEntity, ok := peer.toPeer()
+		if ok {
+			validPeers = append(validPeers, peerEntity)
 		}
 	}
 	return validPeers, errors.Join(errorsFound...)
+}
+
+type peerUnderConstruction struct {
+	id       entities.PeerID
+	address  string
+	lastSeen time.Time
+}
+
+func (p peerUnderConstruction) isValid() bool {
+	return p.id != "" && p.address != "" && p.lastSeen.Unix() > 0
+}
+
+func (p peerUnderConstruction) toPeer() (entities.Peer, bool) {
+	if !p.isValid() {
+		return entities.Peer{}, false
+	}
+	return entities.NewPeer(p.id, p.address, p.lastSeen), true
 }
 
 func derivePeerID(key entities.Key) entities.PeerID {
