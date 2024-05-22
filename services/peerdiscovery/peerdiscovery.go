@@ -13,20 +13,18 @@ const (
 )
 
 var (
-	_peerIDRegex       = regexp.MustCompile("(.*)\\._internal\\..*")
-	_peerAddressRegex  = regexp.MustCompile("(.*)\\._internal\\.peer_address")
-	_peerLastSeenRegex = regexp.MustCompile("(.*)\\._internal\\.peer_last_seen")
+	_peerIDRegex       = regexp.MustCompile("(.+)\\._internal\\..*")
+	_peerAddressRegex  = regexp.MustCompile("(.+)\\._internal\\.peer_address")
+	_peerLastSeenRegex = regexp.MustCompile("(.+)\\._internal\\.peer_last_seen")
 )
 
-type PeerID string
-
 type Peer struct {
-	id       PeerID
+	id       entities.PeerID
 	address  string
 	lastSeen time.Time
 }
 
-func (p Peer) ID() PeerID {
+func (p Peer) ID() entities.PeerID {
 	return p.id
 }
 
@@ -51,7 +49,7 @@ func NewPeerDiscovery(config *entities.Config) *PeerDiscovery {
 }
 
 func (p *PeerDiscovery) GetPeers() ([]Peer, error) {
-	peers := map[PeerID]*Peer{}
+	peers := map[entities.PeerID]*Peer{}
 	var errorsFound []error
 	for key, value := range p.config.List() {
 		peerID := derivePeerID(key)
@@ -84,12 +82,12 @@ func (p *PeerDiscovery) GetPeers() ([]Peer, error) {
 	return validPeers, errors.Join(errorsFound...)
 }
 
-func derivePeerID(key entities.Key) PeerID {
+func derivePeerID(key entities.Key) entities.PeerID {
 	matches := _peerIDRegex.FindStringSubmatch(string(key))
 	if len(matches) != 2 {
 		return ""
 	}
-	return PeerID(matches[1])
+	return entities.PeerID(matches[1])
 }
 
 func isPeerAddressKey(key entities.Key) bool {

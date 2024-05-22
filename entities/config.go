@@ -6,8 +6,10 @@ import (
 )
 
 const (
-	_errValueDoesNotExist               = "value does not exist"
-	_errNewValueIsOlderThanCurrentValue = "new value is older than current value"
+	_errValueDoesNotExist = "value does not exist"
+	// ErrNewValueIsOlderThanCurrentValue is emitted when the new value being set in Set is older than the current value
+	// if this error is emitted the value will not be updated
+	ErrNewValueIsOlderThanCurrentValue = "new value is older than current value"
 )
 
 // Config is a store of versioned values, each value is indexed by a Key and has a specific Version attached to its
@@ -67,7 +69,7 @@ func (c *Config) SetWithVersion(key Key, valueString string, version uint64) err
 		return nil
 	}
 	if oldValue.version > version {
-		return errors.New(_errNewValueIsOlderThanCurrentValue)
+		return errors.New(ErrNewValueIsOlderThanCurrentValue)
 	}
 	oldValue.value = valueString
 	oldValue.version = version

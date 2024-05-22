@@ -55,7 +55,7 @@ func Test_GetPeers_WhenLastSeenInvalid_ReturnsErrorButStillReturnsOtherPeers(t *
 	peers, err := peerDiscovery.GetPeers()
 	require.ErrorContains(t, err, _errInvalidPeerLastSeen)
 	require.Len(t, peers, 1)
-	require.Equal(t, PeerID("c8690439-293c-494d-9d26-257d64402b42"), peers[0].ID())
+	require.Equal(t, entities.PeerID("c8690439-293c-494d-9d26-257d64402b42"), peers[0].ID())
 	require.Equal(t, "peer_address_1", peers[0].Address())
 	require.Equal(t, int64(1337), peers[0].LastSeen().Unix())
 }

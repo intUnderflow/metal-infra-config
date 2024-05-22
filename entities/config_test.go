@@ -28,6 +28,24 @@ func Test_Config_SetWithVersion_WhenNewValue_Succeeds(t *testing.T) {
 	require.Equal(t, value.Value, "bar")
 }
 
+func Test_Config_SetWithVersion_WhenExistingValue_WithHigherVersion_Succeeds(t *testing.T) {
+	config := NewConfig()
+
+	require.NoError(t, config.SetWithVersion("foo", "zip", 1))
+	require.NoError(t, config.SetWithVersion("foo", "bar", 2))
+
+	value, err := config.GetWithVersion("foo")
+	require.NoError(t, err)
+	require.Equal(t, value.Value, "bar")
+}
+
+func Test_Config_SetWithVersion_WhenValueIsOlder_ReturnsError(t *testing.T) {
+	config := NewConfig()
+
+	require.NoError(t, config.SetWithVersion("foo", "bar", 2))
+	require.EqualError(t, config.SetWithVersion("foo", "bar", 1), ErrNewValueIsOlderThanCurrentValue)
+}
+
 func Test_Config_List_ReturnsKeysWithValues(t *testing.T) {
 	config := NewConfig()
 
@@ -52,4 +70,10 @@ func Test_Delete_WhenValueExists_DeletesValues(t *testing.T) {
 
 	_, err = config.GetWithVersion("foo")
 	require.EqualError(t, err, _errValueDoesNotExist)
+}
+
+func Test_Delete_WhenValueDoesNotExist_ReturnsError(t *testing.T) {
+	config := NewConfig()
+
+	require.EqualError(t, config.Delete("foo"), _errValueDoesNotExist)
 }
