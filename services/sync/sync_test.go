@@ -103,7 +103,7 @@ func Test_Sync_WhenConfigSyncFails_ErrorIsReturned(t *testing.T) {
 	}, nil)
 	mockClient := mock_proto.NewMockMetalInfraConfigClient(f.ctrl)
 	f.rpc.EXPECT().GetClient(peer).Return(mockClient, nil)
-	syncSession := mock_entities.NewMockSyncSession(f.ctrl)
+	syncSession := mock_proto.NewMockMetalInfraConfig_SyncClient(f.ctrl)
 	mockClient.EXPECT().Sync(gomock.Any(), gomock.Any()).Return(syncSession, nil)
 	f.config.EXPECT().Sync(syncSession).Return(expectedErr)
 
@@ -170,10 +170,10 @@ func Test_SyncPeriodically(t *testing.T) {
 		peer1, peer2,
 	}, nil)
 	mockClientPeer1 := mock_proto.NewMockMetalInfraConfigClient(f.ctrl)
-	syncSessionPeer1 := mock_entities.NewMockSyncSession(f.ctrl)
+	syncSessionPeer1 := mock_proto.NewMockMetalInfraConfig_SyncClient(f.ctrl)
 	mockClientPeer1.EXPECT().Sync(gomock.Any(), gomock.Any()).Return(syncSessionPeer1, nil)
 	mockClientPeer2 := mock_proto.NewMockMetalInfraConfigClient(f.ctrl)
-	syncSessionPeer2 := mock_entities.NewMockSyncSession(f.ctrl)
+	syncSessionPeer2 := mock_proto.NewMockMetalInfraConfig_SyncClient(f.ctrl)
 	mockClientPeer2.EXPECT().Sync(gomock.Any(), gomock.Any()).Return(syncSessionPeer2, nil)
 	f.rpc.EXPECT().GetClient(peer1).Return(mockClientPeer1, nil)
 	f.rpc.EXPECT().GetClient(peer2).Return(mockClientPeer2, nil)

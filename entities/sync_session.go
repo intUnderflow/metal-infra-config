@@ -8,24 +8,27 @@ type SyncSession interface {
 	CloseSend() error
 }
 
-type syncSessionClientImpl struct {
-	client proto.MetalInfraConfig_SyncClient
+// proto.MetalInfraConfigServer_SyncClient already satisfies the SyncSession interface
+
+type syncSessionServerImpl struct {
+	server proto.MetalInfraConfig_SyncServer
 }
 
-func NewSyncSessionFromClient(client proto.MetalInfraConfig_SyncClient) SyncSession {
-	return &syncSessionClientImpl{
-		client: client,
+func NewSyncSessionFromServer(server proto.MetalInfraConfig_SyncServer) SyncSession {
+	return &syncSessionServerImpl{
+		server: server,
 	}
 }
 
-func (s *syncSessionClientImpl) Send(record *proto.SyncRecord) error {
-	return s.client.Send(record)
+func (s *syncSessionServerImpl) Send(record *proto.SyncRecord) error {
+	return s.server.Send(record)
 }
 
-func (s *syncSessionClientImpl) Recv() (*proto.SyncRecord, error) {
-	return s.client.Recv()
+func (s *syncSessionServerImpl) Recv() (*proto.SyncRecord, error) {
+	return s.server.Recv()
 }
 
-func (s *syncSessionClientImpl) CloseSend() error {
-	return s.client.CloseSend()
+func (s *syncSessionServerImpl) CloseSend() error {
+	// Server does not have an equivalent of CloseSend
+	return nil
 }
