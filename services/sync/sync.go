@@ -4,15 +4,22 @@ import (
 	"context"
 	"errors"
 	"github.com/intunderflow/metal-infra-config/entities"
+	"github.com/intunderflow/metal-infra-config/pkg/closeable"
 	"github.com/intunderflow/metal-infra-config/services/peerdiscovery"
 	"go.uber.org/zap"
+	"time"
 )
 
 const (
 	_errFailedToSyncAnyPeers = "failed to sync to any peers"
 )
 
-type Sync struct {
+type Sync interface {
+	Sync(context.Context) error
+	SyncPeriodically(context.Context, time.Duration) closeable.Closeable
+}
+
+type syncImpl struct {
 	log           *zap.Logger
 	config        entities.Config
 	peerDiscovery peerdiscovery.PeerDiscovery
@@ -24,8 +31,8 @@ func NewSync(
 	config entities.Config,
 	peerDiscovery peerdiscovery.PeerDiscovery,
 	rpc RPC,
-) *Sync {
-	return &Sync{
+) Sync {
+	return &syncImpl{
 		log:           log,
 		config:        config,
 		peerDiscovery: peerDiscovery,
@@ -36,7 +43,7 @@ func NewSync(
 // Sync contacts peers we are aware of and synchronises configurations from that peer.
 // It writes any new values we are not aware of to our config object.
 // Sync calls each peer one-by-one, not all at once and uses a bidirectional stream to copy each others configs.
-func (s *Sync) Sync(ctx context.Context) error {
+func (s *syncImpl) Sync(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -73,6 +80,33 @@ func (s *Sync) Sync(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *syncImpl) SyncPeriodically(ctx context.Context, interval time.Duration) closeable.Closeable {
+	closer := closeable.NewCloseable()
+	go s.syncPeriodically(ctx, closer, interval)
+	return closer
+}
+
+func (s *syncImpl) syncPeriodically(ctx context.Context, closer closeable.Closeable, interval time.Duration) {
+	ctx, cancel := context.WithCancel(ctx)
+	go func() {
+		closer.WaitForClosure()
+		cancel()
+	}()
+	for !closer.IsClosed() {
+		err := s.Sync(ctx)
+		if err != nil {
+			s.log.Warn("failed to sync", zap.Error(err))
+		}
+		t := time.NewTimer(interval)
+		select {
+		case <-ctx.Done():
+			break
+		case <-t.C:
+			continue
+		}
+	}
 }
 
 func reportSyncFailure(log *zap.Logger, peer entities.Peer, err error) {
