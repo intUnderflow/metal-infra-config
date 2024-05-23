@@ -2,8 +2,8 @@ package entities
 
 import (
 	"errors"
+	mock_entities "github.com/intunderflow/metal-infra-config/entities/mock"
 	"github.com/intunderflow/metal-infra-config/proto"
-	mock_proto "github.com/intunderflow/metal-infra-config/proto/mock"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"io"
@@ -12,7 +12,7 @@ import (
 
 func Test_Sync_WhenErrorSendingRecords_ReturnsError(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockSession := mock_proto.NewMockMetalInfraConfig_SyncClient(ctrl)
+	mockSession := mock_entities.NewMockSyncSession(ctrl)
 	expectedErr := errors.New("foobar")
 	mockSession.EXPECT().Send(gomock.Any()).Return(expectedErr)
 
@@ -25,7 +25,7 @@ func Test_Sync_WhenErrorSendingRecords_ReturnsError(t *testing.T) {
 
 func Test_Sync_WhenErrorClosingSend_ReturnsError(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockSession := mock_proto.NewMockMetalInfraConfig_SyncClient(ctrl)
+	mockSession := mock_entities.NewMockSyncSession(ctrl)
 	expectedErr := errors.New("foobar")
 	mockSession.EXPECT().Send(gomock.Any()).Times(2).Return(nil)
 	mockSession.EXPECT().CloseSend().Return(expectedErr)
@@ -40,7 +40,7 @@ func Test_Sync_WhenErrorClosingSend_ReturnsError(t *testing.T) {
 
 func Test_Sync_WhenErrorReceivingRecords_ReturnsError(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockSession := mock_proto.NewMockMetalInfraConfig_SyncClient(ctrl)
+	mockSession := mock_entities.NewMockSyncSession(ctrl)
 	expectedErr := errors.New("foobar")
 	mockSession.EXPECT().Send(gomock.Any()).Times(2).Return(nil)
 	mockSession.EXPECT().CloseSend().Return(nil)
@@ -56,7 +56,7 @@ func Test_Sync_WhenErrorReceivingRecords_ReturnsError(t *testing.T) {
 
 func Test_Sync_SynchronisesOverSession(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	mockSession := mock_proto.NewMockMetalInfraConfig_SyncClient(ctrl)
+	mockSession := mock_entities.NewMockSyncSession(ctrl)
 	mockSession.EXPECT().Send(gomock.Any()).Times(2).Return(nil)
 	mockSession.EXPECT().CloseSend().Return(nil)
 	// New value that we expect to be populated

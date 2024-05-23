@@ -2,7 +2,6 @@ package entities
 
 import (
 	"errors"
-	"github.com/intunderflow/metal-infra-config/proto"
 	"sync"
 )
 
@@ -20,7 +19,7 @@ type Config interface {
 	SetWithVersion(Key, string, uint64) error
 	List() map[Key]ValueWithVersion
 	Delete(Key) error
-	Sync(proto.MetalInfraConfig_SyncClient) error
+	Sync(SyncSession) error
 }
 
 type configImpl struct {

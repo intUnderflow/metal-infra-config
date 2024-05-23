@@ -66,7 +66,7 @@ func (s *syncImpl) Sync(ctx context.Context) error {
 			continue
 		}
 
-		err = s.config.Sync(syncSession)
+		err = s.config.Sync(entities.NewSyncSessionFromClient(syncSession))
 		if err != nil {
 			reportSyncFailure(s.log, peer, err)
 			continue

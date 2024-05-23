@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-func (c *configImpl) Sync(session proto.MetalInfraConfig_SyncClient) error {
+func (c *configImpl) Sync(session SyncSession) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	values := c.listInternal()
