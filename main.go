@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"github.com/intunderflow/metal-infra-config/entities"
 	"github.com/intunderflow/metal-infra-config/handler"
@@ -13,9 +15,17 @@ import (
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"net"
 	"os"
 	"time"
+)
+
+const (
+	_envPort            = "PORT"
+	_envTLSRootCAFile   = "TLS_ROOT_CA_FILE"
+	_envTLSNodeCertFile = "TLS_NODE_CA_FILE"
+	_envTLSNodeKeyFile  = "TLS_NODE_KEY_FILE"
 )
 
 func main() {
@@ -29,19 +39,59 @@ func opts() fx.Option {
 			zap.NewProduction,
 			entities.NewConfig,
 			handler.NewHandler,
-			grpc.NewServer,
+			// Server initialisation
 			func(g *grpc.Server) grpc.ServiceRegistrar {
 				return g
 			},
 			func() (port.Port, error) {
-				return port.ParsePort(os.Getenv("PORT"))
+				return port.ParsePort(os.Getenv(_envPort))
 			},
 			func(p port.Port) (net.Listener, error) {
 				return net.Listen("tcp", fmt.Sprintf(":%d", p))
 			},
-			func() []grpc.DialOption {
-				return []grpc.DialOption{}
+			func(opts []grpc.ServerOption) *grpc.Server {
+				return grpc.NewServer(opts...)
 			},
+
+			// TLS root CA
+			func() (*x509.CertPool, error) {
+				pemClientCA, err := os.ReadFile(os.Getenv(_envTLSRootCAFile))
+				if err != nil {
+					return nil, err
+				}
+
+				certPool := x509.NewCertPool()
+				if !certPool.AppendCertsFromPEM(pemClientCA) {
+					return nil, fmt.Errorf("failed to add client CA's certificate")
+				}
+
+				return certPool, nil
+			},
+			// Server TLS
+			func() (tls.Certificate, error) {
+				return tls.LoadX509KeyPair(os.Getenv(_envTLSNodeCertFile), os.Getenv(_envTLSNodeKeyFile))
+			},
+			func(cert tls.Certificate, rootCA *x509.CertPool) []grpc.ServerOption {
+				return []grpc.ServerOption{
+					grpc.Creds(credentials.NewTLS(&tls.Config{
+						Certificates: []tls.Certificate{cert},
+						ClientAuth:   tls.RequireAndVerifyClientCert,
+						RootCAs:      rootCA,
+					})),
+				}
+			},
+			// Client TLS
+			func() ([]grpc.DialOption, error) {
+				tlsCredentials, err := credentials.NewClientTLSFromFile(os.Getenv(_envTLSNodeCertFile), "")
+				if err != nil {
+					return nil, err
+				}
+				return []grpc.DialOption{
+					grpc.WithTransportCredentials(tlsCredentials),
+				}, nil
+			},
+
+			// Services
 			sync.NewRPC,
 			sync.NewSync,
 			syncfx.NewFX,
