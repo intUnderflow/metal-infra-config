@@ -83,7 +83,7 @@ func Test_Sync_WhenStartSyncSessionFails_ErrorIsReturned(t *testing.T) {
 	f.peerDiscovery.EXPECT().GetPeers().Return([]entities.Peer{
 		peer,
 	}, nil)
-	mockClient := mock_proto.NewMockInternalSyncClient(f.ctrl)
+	mockClient := mock_proto.NewMockMetalInfraConfigClient(f.ctrl)
 	f.rpc.EXPECT().GetClient(peer).Return(mockClient, nil)
 	mockClient.EXPECT().Sync(gomock.Any(), gomock.Any()).Return(nil, expectedErr)
 
@@ -101,9 +101,9 @@ func Test_Sync_WhenConfigSyncFails_ErrorIsReturned(t *testing.T) {
 	f.peerDiscovery.EXPECT().GetPeers().Return([]entities.Peer{
 		peer,
 	}, nil)
-	mockClient := mock_proto.NewMockInternalSyncClient(f.ctrl)
+	mockClient := mock_proto.NewMockMetalInfraConfigClient(f.ctrl)
 	f.rpc.EXPECT().GetClient(peer).Return(mockClient, nil)
-	syncSession := mock_proto.NewMockInternalSync_SyncClient(f.ctrl)
+	syncSession := mock_proto.NewMockMetalInfraConfig_SyncClient(f.ctrl)
 	mockClient.EXPECT().Sync(gomock.Any(), gomock.Any()).Return(syncSession, nil)
 	f.config.EXPECT().Sync(syncSession).Return(expectedErr)
 
@@ -121,10 +121,10 @@ func Test_Sync_WhenAtLeastOneClientSucceeds_NoErrorIsReturned(t *testing.T) {
 	f.peerDiscovery.EXPECT().GetPeers().Return([]entities.Peer{
 		peer1, peer2,
 	}, nil)
-	mockClientPeer1 := mock_proto.NewMockInternalSyncClient(f.ctrl)
+	mockClientPeer1 := mock_proto.NewMockMetalInfraConfigClient(f.ctrl)
 	mockClientPeer1.EXPECT().Sync(gomock.Any(), gomock.Any()).Return(nil, errors.New("foo"))
-	mockClientPeer2 := mock_proto.NewMockInternalSyncClient(f.ctrl)
-	syncSession := mock_proto.NewMockInternalSync_SyncClient(f.ctrl)
+	mockClientPeer2 := mock_proto.NewMockMetalInfraConfigClient(f.ctrl)
+	syncSession := mock_proto.NewMockMetalInfraConfig_SyncClient(f.ctrl)
 	mockClientPeer2.EXPECT().Sync(gomock.Any(), gomock.Any()).Return(syncSession, nil)
 	f.rpc.EXPECT().GetClient(peer1).Return(mockClientPeer1, nil)
 	f.rpc.EXPECT().GetClient(peer2).Return(mockClientPeer2, nil)
@@ -144,11 +144,11 @@ func Test_Sync_WhenAllClientsSucceed_NoErrorIsReturned(t *testing.T) {
 	f.peerDiscovery.EXPECT().GetPeers().Return([]entities.Peer{
 		peer1, peer2,
 	}, nil)
-	mockClientPeer1 := mock_proto.NewMockInternalSyncClient(f.ctrl)
-	syncSessionPeer1 := mock_proto.NewMockInternalSync_SyncClient(f.ctrl)
+	mockClientPeer1 := mock_proto.NewMockMetalInfraConfigClient(f.ctrl)
+	syncSessionPeer1 := mock_proto.NewMockMetalInfraConfig_SyncClient(f.ctrl)
 	mockClientPeer1.EXPECT().Sync(gomock.Any(), gomock.Any()).Return(syncSessionPeer1, nil)
-	mockClientPeer2 := mock_proto.NewMockInternalSyncClient(f.ctrl)
-	syncSessionPeer2 := mock_proto.NewMockInternalSync_SyncClient(f.ctrl)
+	mockClientPeer2 := mock_proto.NewMockMetalInfraConfigClient(f.ctrl)
+	syncSessionPeer2 := mock_proto.NewMockMetalInfraConfig_SyncClient(f.ctrl)
 	mockClientPeer2.EXPECT().Sync(gomock.Any(), gomock.Any()).Return(syncSessionPeer2, nil)
 	f.rpc.EXPECT().GetClient(peer1).Return(mockClientPeer1, nil)
 	f.rpc.EXPECT().GetClient(peer2).Return(mockClientPeer2, nil)
@@ -169,22 +169,22 @@ func Test_SyncPeriodically(t *testing.T) {
 	f.peerDiscovery.EXPECT().GetPeers().Return([]entities.Peer{
 		peer1, peer2,
 	}, nil)
-	mockClientPeer1 := mock_proto.NewMockInternalSyncClient(f.ctrl)
-	syncSessionPeer1 := mock_proto.NewMockInternalSync_SyncClient(f.ctrl)
+	mockClientPeer1 := mock_proto.NewMockMetalInfraConfigClient(f.ctrl)
+	syncSessionPeer1 := mock_proto.NewMockMetalInfraConfig_SyncClient(f.ctrl)
 	mockClientPeer1.EXPECT().Sync(gomock.Any(), gomock.Any()).Return(syncSessionPeer1, nil)
-	mockClientPeer2 := mock_proto.NewMockInternalSyncClient(f.ctrl)
-	syncSessionPeer2 := mock_proto.NewMockInternalSync_SyncClient(f.ctrl)
+	mockClientPeer2 := mock_proto.NewMockMetalInfraConfigClient(f.ctrl)
+	syncSessionPeer2 := mock_proto.NewMockMetalInfraConfig_SyncClient(f.ctrl)
 	mockClientPeer2.EXPECT().Sync(gomock.Any(), gomock.Any()).Return(syncSessionPeer2, nil)
 	f.rpc.EXPECT().GetClient(peer1).Return(mockClientPeer1, nil)
 	f.rpc.EXPECT().GetClient(peer2).Return(mockClientPeer2, nil)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
-	f.config.EXPECT().Sync(syncSessionPeer1).DoAndReturn(func(_ proto.InternalSync_SyncClient) error {
+	f.config.EXPECT().Sync(syncSessionPeer1).DoAndReturn(func(_ proto.MetalInfraConfig_SyncClient) error {
 		wg.Done()
 		return nil
 	})
-	f.config.EXPECT().Sync(syncSessionPeer2).DoAndReturn(func(_ proto.InternalSync_SyncClient) error {
+	f.config.EXPECT().Sync(syncSessionPeer2).DoAndReturn(func(_ proto.MetalInfraConfig_SyncClient) error {
 		wg.Done()
 		return nil
 	})

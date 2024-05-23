@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	MetalInfraConfig_Set_FullMethodName = "/proto.MetalInfraConfig/Set"
+	MetalInfraConfig_Set_FullMethodName  = "/proto.MetalInfraConfig/Set"
+	MetalInfraConfig_Sync_FullMethodName = "/proto.MetalInfraConfig/Sync"
 )
 
 // MetalInfraConfigClient is the client API for MetalInfraConfig service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MetalInfraConfigClient interface {
 	Set(ctx context.Context, in *SetRequest, opts ...grpc.CallOption) (*SetResponse, error)
+	Sync(ctx context.Context, opts ...grpc.CallOption) (MetalInfraConfig_SyncClient, error)
 }
 
 type metalInfraConfigClient struct {
@@ -46,11 +48,43 @@ func (c *metalInfraConfigClient) Set(ctx context.Context, in *SetRequest, opts .
 	return out, nil
 }
 
+func (c *metalInfraConfigClient) Sync(ctx context.Context, opts ...grpc.CallOption) (MetalInfraConfig_SyncClient, error) {
+	stream, err := c.cc.NewStream(ctx, &MetalInfraConfig_ServiceDesc.Streams[0], MetalInfraConfig_Sync_FullMethodName, opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &metalInfraConfigSyncClient{stream}
+	return x, nil
+}
+
+type MetalInfraConfig_SyncClient interface {
+	Send(*SyncRecord) error
+	Recv() (*SyncRecord, error)
+	grpc.ClientStream
+}
+
+type metalInfraConfigSyncClient struct {
+	grpc.ClientStream
+}
+
+func (x *metalInfraConfigSyncClient) Send(m *SyncRecord) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *metalInfraConfigSyncClient) Recv() (*SyncRecord, error) {
+	m := new(SyncRecord)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // MetalInfraConfigServer is the server API for MetalInfraConfig service.
 // All implementations must embed UnimplementedMetalInfraConfigServer
 // for forward compatibility
 type MetalInfraConfigServer interface {
 	Set(context.Context, *SetRequest) (*SetResponse, error)
+	Sync(MetalInfraConfig_SyncServer) error
 	mustEmbedUnimplementedMetalInfraConfigServer()
 }
 
@@ -60,6 +94,9 @@ type UnimplementedMetalInfraConfigServer struct {
 
 func (UnimplementedMetalInfraConfigServer) Set(context.Context, *SetRequest) (*SetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Set not implemented")
+}
+func (UnimplementedMetalInfraConfigServer) Sync(MetalInfraConfig_SyncServer) error {
+	return status.Errorf(codes.Unimplemented, "method Sync not implemented")
 }
 func (UnimplementedMetalInfraConfigServer) mustEmbedUnimplementedMetalInfraConfigServer() {}
 
@@ -92,6 +129,32 @@ func _MetalInfraConfig_Set_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MetalInfraConfig_Sync_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(MetalInfraConfigServer).Sync(&metalInfraConfigSyncServer{stream})
+}
+
+type MetalInfraConfig_SyncServer interface {
+	Send(*SyncRecord) error
+	Recv() (*SyncRecord, error)
+	grpc.ServerStream
+}
+
+type metalInfraConfigSyncServer struct {
+	grpc.ServerStream
+}
+
+func (x *metalInfraConfigSyncServer) Send(m *SyncRecord) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *metalInfraConfigSyncServer) Recv() (*SyncRecord, error) {
+	m := new(SyncRecord)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // MetalInfraConfig_ServiceDesc is the grpc.ServiceDesc for MetalInfraConfig service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -104,125 +167,10 @@ var MetalInfraConfig_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _MetalInfraConfig_Set_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "metalinfraconfig.proto",
-}
-
-const (
-	InternalSync_Sync_FullMethodName = "/proto.InternalSync/Sync"
-)
-
-// InternalSyncClient is the client API for InternalSync service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type InternalSyncClient interface {
-	Sync(ctx context.Context, opts ...grpc.CallOption) (InternalSync_SyncClient, error)
-}
-
-type internalSyncClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewInternalSyncClient(cc grpc.ClientConnInterface) InternalSyncClient {
-	return &internalSyncClient{cc}
-}
-
-func (c *internalSyncClient) Sync(ctx context.Context, opts ...grpc.CallOption) (InternalSync_SyncClient, error) {
-	stream, err := c.cc.NewStream(ctx, &InternalSync_ServiceDesc.Streams[0], InternalSync_Sync_FullMethodName, opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &internalSyncSyncClient{stream}
-	return x, nil
-}
-
-type InternalSync_SyncClient interface {
-	Send(*SyncRecord) error
-	Recv() (*SyncRecord, error)
-	grpc.ClientStream
-}
-
-type internalSyncSyncClient struct {
-	grpc.ClientStream
-}
-
-func (x *internalSyncSyncClient) Send(m *SyncRecord) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *internalSyncSyncClient) Recv() (*SyncRecord, error) {
-	m := new(SyncRecord)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-// InternalSyncServer is the server API for InternalSync service.
-// All implementations must embed UnimplementedInternalSyncServer
-// for forward compatibility
-type InternalSyncServer interface {
-	Sync(InternalSync_SyncServer) error
-	mustEmbedUnimplementedInternalSyncServer()
-}
-
-// UnimplementedInternalSyncServer must be embedded to have forward compatible implementations.
-type UnimplementedInternalSyncServer struct {
-}
-
-func (UnimplementedInternalSyncServer) Sync(InternalSync_SyncServer) error {
-	return status.Errorf(codes.Unimplemented, "method Sync not implemented")
-}
-func (UnimplementedInternalSyncServer) mustEmbedUnimplementedInternalSyncServer() {}
-
-// UnsafeInternalSyncServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to InternalSyncServer will
-// result in compilation errors.
-type UnsafeInternalSyncServer interface {
-	mustEmbedUnimplementedInternalSyncServer()
-}
-
-func RegisterInternalSyncServer(s grpc.ServiceRegistrar, srv InternalSyncServer) {
-	s.RegisterService(&InternalSync_ServiceDesc, srv)
-}
-
-func _InternalSync_Sync_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(InternalSyncServer).Sync(&internalSyncSyncServer{stream})
-}
-
-type InternalSync_SyncServer interface {
-	Send(*SyncRecord) error
-	Recv() (*SyncRecord, error)
-	grpc.ServerStream
-}
-
-type internalSyncSyncServer struct {
-	grpc.ServerStream
-}
-
-func (x *internalSyncSyncServer) Send(m *SyncRecord) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *internalSyncSyncServer) Recv() (*SyncRecord, error) {
-	m := new(SyncRecord)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-// InternalSync_ServiceDesc is the grpc.ServiceDesc for InternalSync service.
-// It's only intended for direct use with grpc.RegisterService,
-// and not to be introspected or modified (even as a copy)
-var InternalSync_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "proto.InternalSync",
-	HandlerType: (*InternalSyncServer)(nil),
-	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Sync",
-			Handler:       _InternalSync_Sync_Handler,
+			Handler:       _MetalInfraConfig_Sync_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

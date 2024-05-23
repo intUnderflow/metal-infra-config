@@ -20,7 +20,7 @@ type Config interface {
 	SetWithVersion(Key, string, uint64) error
 	List() map[Key]ValueWithVersion
 	Delete(Key) error
-	Sync(proto.InternalSync_SyncClient) error
+	Sync(proto.MetalInfraConfig_SyncClient) error
 }
 
 type configImpl struct {

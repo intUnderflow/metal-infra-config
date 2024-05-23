@@ -7,7 +7,7 @@ import (
 )
 
 type RPC interface {
-	GetClient(peer entities.Peer) (proto.InternalSyncClient, error)
+	GetClient(peer entities.Peer) (proto.MetalInfraConfigClient, error)
 }
 
 type rpcImpl struct {
@@ -20,11 +20,11 @@ func NewRPC(dialOptions []grpc.DialOption) RPC {
 	}
 }
 
-func (r *rpcImpl) GetClient(peer entities.Peer) (proto.InternalSyncClient, error) {
+func (r *rpcImpl) GetClient(peer entities.Peer) (proto.MetalInfraConfigClient, error) {
 	clientConn, err := grpc.NewClient(peer.Address(), r.dialOptions...)
 	if err != nil {
 		return nil, err
 	}
 
-	return proto.NewInternalSyncClient(clientConn), nil
+	return proto.NewMetalInfraConfigClient(clientConn), nil
 }

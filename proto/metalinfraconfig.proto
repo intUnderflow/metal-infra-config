@@ -5,9 +5,6 @@ option go_package = "github.com/intunderflow/metal-infra-config/proto";
 
 service MetalInfraConfig {
   rpc Set(SetRequest) returns (SetResponse);
-}
-
-service InternalSync {
   rpc Sync(stream SyncRecord) returns (stream SyncRecord);
 }
 

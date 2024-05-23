@@ -95,10 +95,10 @@ func (m *MockRPC) EXPECT() *MockRPCMockRecorder {
 }
 
 // GetClient mocks base method.
-func (m *MockRPC) GetClient(arg0 entities.Peer) (proto.InternalSyncClient, error) {
+func (m *MockRPC) GetClient(arg0 entities.Peer) (proto.MetalInfraConfigClient, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetClient", arg0)
-	ret0, _ := ret[0].(proto.InternalSyncClient)
+	ret0, _ := ret[0].(proto.MetalInfraConfigClient)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

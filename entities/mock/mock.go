@@ -98,7 +98,7 @@ func (mr *MockConfigMockRecorder) SetWithVersion(arg0, arg1, arg2 any) *gomock.C
 }
 
 // Sync mocks base method.
-func (m *MockConfig) Sync(arg0 proto.InternalSync_SyncClient) error {
+func (m *MockConfig) Sync(arg0 proto.MetalInfraConfig_SyncClient) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Sync", arg0)
 	ret0, _ := ret[0].(error)
