@@ -2,6 +2,7 @@ package entities
 
 import (
 	"errors"
+	"github.com/intunderflow/metal-infra-config/proto"
 	"sync"
 )
 
@@ -14,7 +15,15 @@ const (
 
 // Config is a store of versioned values, each value is indexed by a Key and has a specific Version attached to its
 // current value
-type Config struct {
+type Config interface {
+	GetWithVersion(Key) (ValueWithVersion, error)
+	SetWithVersion(Key, string, uint64) error
+	List() map[Key]ValueWithVersion
+	Delete(Key) error
+	Sync(proto.InternalSync_SyncClient) error
+}
+
+type configImpl struct {
 	mutex  *sync.RWMutex
 	values map[Key]*value
 }
@@ -35,8 +44,8 @@ type value struct {
 }
 
 // NewConfig creates a new instance of Config
-func NewConfig() *Config {
-	return &Config{
+func NewConfig() Config {
+	return &configImpl{
 		mutex:  &sync.RWMutex{},
 		values: map[Key]*value{},
 	}
@@ -44,7 +53,7 @@ func NewConfig() *Config {
 
 // GetWithVersion returns a ValueWithVersion representing the underlying value at the provided Key, if no value is
 // present it returns an error. The ValueWithVersion is a copy of the underlying value and cannot be used to mutate it.
-func (c *Config) GetWithVersion(key Key) (ValueWithVersion, error) {
+func (c *configImpl) GetWithVersion(key Key) (ValueWithVersion, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 	value, ok := c.values[key]
@@ -57,7 +66,7 @@ func (c *Config) GetWithVersion(key Key) (ValueWithVersion, error) {
 
 // SetWithVersion sets the value at the given Key to the specified valueString and version.
 // If the value in the Config already has a higher ValueVersion then an error is returned.
-func (c *Config) SetWithVersion(key Key, valueString string, version uint64) error {
+func (c *configImpl) SetWithVersion(key Key, valueString string, version uint64) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	oldValue, ok := c.values[key]
@@ -77,9 +86,13 @@ func (c *Config) SetWithVersion(key Key, valueString string, version uint64) err
 }
 
 // List returns a map of all values in the Config, each value is mapped to its Key with a ValueWithVersion.
-func (c *Config) List() map[Key]ValueWithVersion {
+func (c *configImpl) List() map[Key]ValueWithVersion {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
+	return c.listInternal()
+}
+
+func (c *configImpl) listInternal() map[Key]ValueWithVersion {
 	allValues := map[Key]ValueWithVersion{}
 	for k, v := range c.values {
 		allValues[k] = valueWithVersionFromInternal(v)
@@ -88,7 +101,7 @@ func (c *Config) List() map[Key]ValueWithVersion {
 }
 
 // Delete deletes a Key from the config, it returns an error if the Key doesn't exist
-func (c *Config) Delete(key Key) error {
+func (c *configImpl) Delete(key Key) error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	_, ok := c.values[key]

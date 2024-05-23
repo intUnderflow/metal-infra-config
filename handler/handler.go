@@ -5,13 +5,13 @@ import (
 	"github.com/intunderflow/metal-infra-config/proto"
 )
 
-func NewHandler(config *entities.Config) proto.MetalInfraConfigServer {
+func NewHandler(config entities.Config) proto.MetalInfraConfigServer {
 	return &Handler{
 		config: config,
 	}
 }
 
 type Handler struct {
-	config *entities.Config
+	config entities.Config
 	proto.UnimplementedMetalInfraConfigServer
 }

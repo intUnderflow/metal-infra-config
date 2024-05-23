@@ -11,7 +11,7 @@ import (
 
 func Test_GetClient_WithClientCreationFailure_ReturnsError(t *testing.T) {
 	rpc := NewRPC([]grpc.DialOption{})
-	_, err := rpc.getClient(entities.NewPeer("foobar", ":", time.Now()))
+	_, err := rpc.GetClient(entities.NewPeer("foobar", ":", time.Now()))
 	require.ErrorContains(t, err, "grpc")
 }
 
@@ -19,7 +19,7 @@ func Test_GetClient_WithValidPeer_ReturnsClient(t *testing.T) {
 	rpc := NewRPC([]grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	})
-	client, err := rpc.getClient(entities.NewPeer("foobar", "1.2.3.4:5678", time.Now()))
+	client, err := rpc.GetClient(entities.NewPeer("foobar", "1.2.3.4:5678", time.Now()))
 	require.NoError(t, err)
 	require.NotNil(t, client)
 }

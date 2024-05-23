@@ -18,15 +18,19 @@ var (
 	_peerLastSeenRegex = regexp.MustCompile("(.+)\\._internal\\.peer_last_seen")
 )
 
-type PeerDiscovery struct {
-	config *entities.Config
+type PeerDiscovery interface {
+	GetPeers() ([]entities.Peer, error)
 }
 
-func NewPeerDiscovery(config *entities.Config) *PeerDiscovery {
-	return &PeerDiscovery{config: config}
+type peerDiscoveryImpl struct {
+	config entities.Config
 }
 
-func (p *PeerDiscovery) GetPeers() ([]entities.Peer, error) {
+func NewPeerDiscovery(config entities.Config) PeerDiscovery {
+	return &peerDiscoveryImpl{config: config}
+}
+
+func (p *peerDiscoveryImpl) GetPeers() ([]entities.Peer, error) {
 	peers := map[entities.PeerID]*peerUnderConstruction{}
 	var errorsFound []error
 	for key, value := range p.config.List() {

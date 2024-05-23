@@ -6,17 +6,21 @@ import (
 	"google.golang.org/grpc"
 )
 
-type RPC struct {
+type RPC interface {
+	GetClient(peer entities.Peer) (proto.InternalSyncClient, error)
+}
+
+type rpcImpl struct {
 	dialOptions []grpc.DialOption
 }
 
-func NewRPC(dialOptions []grpc.DialOption) *RPC {
-	return &RPC{
+func NewRPC(dialOptions []grpc.DialOption) RPC {
+	return &rpcImpl{
 		dialOptions: dialOptions,
 	}
 }
 
-func (r *RPC) getClient(peer entities.Peer) (proto.InternalSyncClient, error) {
+func (r *rpcImpl) GetClient(peer entities.Peer) (proto.InternalSyncClient, error) {
 	clientConn, err := grpc.NewClient(peer.Address(), r.dialOptions...)
 	if err != nil {
 		return nil, err
