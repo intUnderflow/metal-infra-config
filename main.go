@@ -43,11 +43,8 @@ func opts() fx.Option {
 			zap.NewProduction,
 			// Create config and bootstrap data
 			entities.NewConfig,
-			func() billy.Basic {
-				return osfs.New("/")
-			},
 			func(fs billy.Basic) (map[string]string, error) {
-				file, err := fs.Open(os.Getenv(_envBootstrapFile))
+				file, err := osfs.New("/").Open(os.Getenv(_envBootstrapFile))
 				if err != nil {
 					return nil, err
 				}
