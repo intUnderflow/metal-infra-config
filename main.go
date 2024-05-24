@@ -5,8 +5,11 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/intunderflow/metal-infra-config/entities"
 	"github.com/intunderflow/metal-infra-config/handler"
+	"github.com/intunderflow/metal-infra-config/pkg/bootstrap"
 	"github.com/intunderflow/metal-infra-config/pkg/port"
 	"github.com/intunderflow/metal-infra-config/proto"
 	"github.com/intunderflow/metal-infra-config/services/peerdiscovery"
@@ -26,6 +29,7 @@ const (
 	_envTLSRootCAFile   = "TLS_ROOT_CA_FILE"
 	_envTLSNodeCertFile = "TLS_NODE_CA_FILE"
 	_envTLSNodeKeyFile  = "TLS_NODE_KEY_FILE"
+	_envBootstrapFile   = "BOOTSTRAP_FILE"
 )
 
 func main() {
@@ -37,9 +41,29 @@ func opts() fx.Option {
 		fx.Provide(
 			context.Background,
 			zap.NewProduction,
+			// Create config and bootstrap data
 			entities.NewConfig,
-			handler.NewHandler,
+			func() billy.Basic {
+				return osfs.New("/")
+			},
+			func(fs billy.Basic) (map[string]string, error) {
+				file, err := fs.Open(os.Getenv(_envBootstrapFile))
+				if err != nil {
+					return nil, err
+				}
+				return bootstrap.GetBootstrapRecords(file)
+			},
+			func(c entities.Config, initialValues map[string]string) error {
+				for key, value := range initialValues {
+					err := c.SetWithVersion(entities.Key(key), value, 1)
+					if err != nil {
+						return err
+					}
+				}
+				return nil
+			},
 			// Server initialisation
+			handler.NewHandler,
 			func(g *grpc.Server) grpc.ServiceRegistrar {
 				return g
 			},
